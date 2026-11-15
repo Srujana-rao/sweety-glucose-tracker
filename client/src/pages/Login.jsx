@@ -1,17 +1,48 @@
 
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import API from '../services/api'
 import './Signup.css'
 
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  function handleSubmit(e) {
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
-    console.log('Email:', email)
-    console.log('Password:', password)
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await API.post('/auth/login', {
+        email,
+        password
+      })
+
+      // Store authentication details temporarily
+      sessionStorage.setItem('token', response.data.token)
+      sessionStorage.setItem(
+        'user',
+        JSON.stringify(response.data.user)
+      )
+
+      // Navigate to dashboard
+      navigate('/dashboard')
+
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+        'Login failed. Please try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -19,6 +50,8 @@ function Login() {
       <div className="signup-card">
         <h1>Welcome Back!</h1>
         <p>Login to your Sweety account.</p>
+
+        {error && <p className="error-message">{error}</p>}
 
         <form className="signup-form" onSubmit={handleSubmit}>
           <div>
@@ -43,13 +76,17 @@ function Login() {
             />
           </div>
 
-          <button type="submit">Login</button>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+
           <button
-  type="button"
-  className="google-button"
->
-  Continue with Google
-</button>
+            type="button"
+            className="google-button"
+            onClick={() => setError('Google Sign-in will be configured next.')}
+          >
+            Continue with Google
+          </button>
         </form>
 
         <div className="signup-footer">

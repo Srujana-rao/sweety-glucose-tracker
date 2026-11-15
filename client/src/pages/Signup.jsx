@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import API from '../services/api'
 import './Signup.css'
 
 function Signup() {
@@ -8,12 +9,40 @@ function Signup() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  function handleSubmit(e) {
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
-    console.log('Name:', name)
-    console.log('Email:', email)
-    console.log('Password:', password)
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
+    try {
+      const response = await API.post('/auth/register', {
+        name,
+        email,
+        password
+      })
+
+      setSuccess(response.data.message)
+
+      setTimeout(() => {
+        navigate('/login')
+      }, 1000)
+
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+        'Unable to create account. Please try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -21,6 +50,9 @@ function Signup() {
       <div className="signup-card">
         <h1>Create your Sweety account</h1>
         <p>Start tracking your blood glucose readings.</p>
+
+        {error && <p className="error-message">{error}</p>}
+        {success && <p className="success-message">{success}</p>}
 
         <form className="signup-form" onSubmit={handleSubmit}>
           <div>
@@ -52,11 +84,14 @@ function Signup() {
               placeholder="Create a password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
               required
             />
           </div>
 
-          <button type="submit">Create Account</button>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
         </form>
 
         <div className="signup-footer">
