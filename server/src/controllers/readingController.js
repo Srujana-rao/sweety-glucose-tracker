@@ -10,6 +10,55 @@ const allowedSlots = [
 ]
 
 // ==========================================
+// REUSABLE VALIDATION FUNCTIONS
+// ==========================================
+
+const isValidDate = (date) => {
+  if (
+    typeof date !== 'string' ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(date)
+  ) {
+    return false
+  }
+
+  const [year, month, day] = date.split('-').map(Number)
+  const parsedDate = new Date(Date.UTC(year, month - 1, day))
+
+  return (
+    parsedDate.getUTCFullYear() === year &&
+    parsedDate.getUTCMonth() === month - 1 &&
+    parsedDate.getUTCDate() === day
+  )
+}
+
+const isFutureDate = async (date) => {
+  const result = await pool.query(
+    'SELECT $1::date > CURRENT_DATE AS is_future',
+    [date]
+  )
+
+  return result.rows[0].is_future
+}
+
+const isValidGlucose = (value) => {
+  return (
+    Number.isInteger(value) &&
+    value >= 40 &&
+    value <= 600
+  )
+}
+
+// Return dates as YYYY-MM-DD to avoid timezone conversion
+const readingColumns = `
+  id,
+  user_id,
+  reading_date::text AS reading_date,
+  slot,
+  glucose_level,
+  created_at
+`
+
+// ==========================================
 // ADD GLUCOSE READING
 // ==========================================
 
@@ -17,7 +66,7 @@ const addReading = async (req, res) => {
   try {
     const { reading_date, slot, glucose_level } = req.body
 
-    // 1. Validate required fields
+    // 1. Required fields
     if (
       !reading_date ||
       !slot ||
@@ -29,36 +78,15 @@ const addReading = async (req, res) => {
       })
     }
 
-    // 2. Validate date format
-    if (
-      typeof reading_date !== 'string' ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(reading_date)
-    ) {
+    // 2. Validate date
+    if (!isValidDate(reading_date)) {
       return res.status(400).json({
-        message: 'Date must be in YYYY-MM-DD format'
-      })
-    }
-
-    const [year, month, day] = reading_date.split('-').map(Number)
-    const parsedDate = new Date(Date.UTC(year, month - 1, day))
-
-    if (
-      parsedDate.getUTCFullYear() !== year ||
-      parsedDate.getUTCMonth() !== month - 1 ||
-      parsedDate.getUTCDate() !== day
-    ) {
-      return res.status(400).json({
-        message: 'Please enter a valid date'
+        message: 'Please enter a valid date in YYYY-MM-DD format'
       })
     }
 
     // 3. Prevent future dates
-    const dateCheck = await pool.query(
-      'SELECT $1::date <= CURRENT_DATE AS is_valid',
-      [reading_date]
-    )
-
-    if (!dateCheck.rows[0].is_valid) {
+    if (await isFutureDate(reading_date)) {
       return res.status(400).json({
         message: 'Future dates are not allowed'
       })
@@ -72,22 +100,18 @@ const addReading = async (req, res) => {
     }
 
     // 5. Validate glucose value
-    if (
-      !Number.isInteger(glucose_level) ||
-      glucose_level < 40 ||
-      glucose_level > 600
-    ) {
+    if (!isValidGlucose(glucose_level)) {
       return res.status(400).json({
         message: 'Glucose value must be an integer between 40 and 600'
       })
     }
 
-    // 6. Insert reading
+    // 6. Insert reading for authenticated user
     const result = await pool.query(
       `INSERT INTO readings
        (user_id, reading_date, slot, glucose_level)
        VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+       RETURNING ${readingColumns}`,
       [req.user.id, reading_date, slot, glucose_level]
     )
 
@@ -119,7 +143,7 @@ const addReading = async (req, res) => {
 const getReadings = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT *
+      `SELECT ${readingColumns}
        FROM readings
        WHERE user_id = $1
        ORDER BY reading_date DESC, created_at DESC`,
@@ -157,7 +181,7 @@ const updateReading = async (req, res) => {
       })
     }
 
-    // 2. Validate required fields
+    // 2. Required fields
     if (
       !reading_date ||
       !slot ||
@@ -169,36 +193,15 @@ const updateReading = async (req, res) => {
       })
     }
 
-    // 3. Validate date format
-    if (
-      typeof reading_date !== 'string' ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(reading_date)
-    ) {
+    // 3. Validate date
+    if (!isValidDate(reading_date)) {
       return res.status(400).json({
-        message: 'Date must be in YYYY-MM-DD format'
-      })
-    }
-
-    const [year, month, day] = reading_date.split('-').map(Number)
-    const parsedDate = new Date(Date.UTC(year, month - 1, day))
-
-    if (
-      parsedDate.getUTCFullYear() !== year ||
-      parsedDate.getUTCMonth() !== month - 1 ||
-      parsedDate.getUTCDate() !== day
-    ) {
-      return res.status(400).json({
-        message: 'Please enter a valid date'
+        message: 'Please enter a valid date in YYYY-MM-DD format'
       })
     }
 
     // 4. Prevent future dates
-    const dateCheck = await pool.query(
-      'SELECT $1::date <= CURRENT_DATE AS is_valid',
-      [reading_date]
-    )
-
-    if (!dateCheck.rows[0].is_valid) {
+    if (await isFutureDate(reading_date)) {
       return res.status(400).json({
         message: 'Future dates are not allowed'
       })
@@ -211,25 +214,21 @@ const updateReading = async (req, res) => {
       })
     }
 
-    // 6. Validate glucose value
-    if (
-      !Number.isInteger(glucose_level) ||
-      glucose_level < 40 ||
-      glucose_level > 600
-    ) {
+    // 6. Validate glucose
+    if (!isValidGlucose(glucose_level)) {
       return res.status(400).json({
         message: 'Glucose value must be an integer between 40 and 600'
       })
     }
 
-    // 7. Update only if the reading belongs to logged-in user
+    // 7. Update only the logged-in user's reading
     const result = await pool.query(
       `UPDATE readings
        SET reading_date = $1,
            slot = $2,
            glucose_level = $3
        WHERE id = $4 AND user_id = $5
-       RETURNING *`,
+       RETURNING ${readingColumns}`,
       [reading_date, slot, glucose_level, id, req.user.id]
     )
 
@@ -275,11 +274,11 @@ const deleteReading = async (req, res) => {
       })
     }
 
-    // 2. Delete only if reading belongs to logged-in user
+    // 2. Delete only the logged-in user's reading
     const result = await pool.query(
       `DELETE FROM readings
        WHERE id = $1 AND user_id = $2
-       RETURNING *`,
+       RETURNING ${readingColumns}`,
       [id, req.user.id]
     )
 
@@ -305,7 +304,7 @@ const deleteReading = async (req, res) => {
 
 
 // ==========================================
-// EXPORT ALL FUNCTIONS
+// EXPORT CONTROLLERS
 // ==========================================
 
 module.exports = {
