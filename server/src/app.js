@@ -1,9 +1,11 @@
+
 const express = require('express')
 const cors = require('cors')
 
 require('./config/db')
 
 const authRoutes = require('./routes/authRoutes')
+const readingRoutes = require('./routes/readingRoutes')
 
 const app = express()
 
@@ -14,7 +16,7 @@ app.get('/', (req, res) => {
   res.send('Sweety API is running!')
 })
 
-// Authentication routes
 app.use('/api/auth', authRoutes)
+app.use('/api/readings', readingRoutes)
 
 module.exports = app
