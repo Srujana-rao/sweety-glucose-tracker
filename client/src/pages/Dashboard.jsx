@@ -39,22 +39,27 @@ function Dashboard() {
   // STATE
   // ==========================================
 
-  // Automatically select today's date
   const [selectedDate, setSelectedDate] = useState(getToday())
 
   const [readings, setReadings] = useState([])
   const [slot, setSlot] = useState('')
   const [glucoseLevel, setGlucoseLevel] = useState('')
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // Edit states
+  const [editingReadingId, setEditingReadingId] = useState(null)
+  const [editGlucoseLevel, setEditGlucoseLevel] = useState('')
 
   // ==========================================
   // TEMPORARY SUCCESS MESSAGE
   // ==========================================
 
-  // Clear individual success messages after 3.5 seconds
   useEffect(() => {
     if (!success) return
 
@@ -105,14 +110,12 @@ function Dashboard() {
   // AUTOMATIC NEW-DAY DETECTION
   // ==========================================
 
-  // Remember the last actual calendar date
   const lastObservedDate = useRef(getToday())
 
   useEffect(() => {
     const interval = setInterval(() => {
       const currentDate = getToday()
 
-      // Reset only when the actual calendar day changes
       if (lastObservedDate.current !== currentDate) {
         lastObservedDate.current = currentDate
 
@@ -120,6 +123,8 @@ function Dashboard() {
         setGlucoseLevel('')
         setError('')
         setSuccess('')
+        setEditingReadingId(null)
+        setEditGlucoseLevel('')
 
         fetchReadings()
       }
@@ -136,19 +141,16 @@ function Dashboard() {
     normalizeReadingDate(reading.reading_date) === selectedDate
   )
 
-  // Find reading for a particular slot
   const getReadingForSlot = (readingSlot) => {
     return dailyReadings.find(
       reading => reading.slot === readingSlot
     )
   }
 
-  // Slots that have not been recorded
   const availableSlots = allowedSlots.filter(
     readingSlot => !getReadingForSlot(readingSlot)
   )
 
-  // Check whether all four readings are recorded
   const allReadingsRecorded = dailyReadings.length === 4
 
   // ==========================================
@@ -218,7 +220,6 @@ function Dashboard() {
         glucose_level: glucose
       })
 
-      // Refresh readings after successful insertion
       const updatedReadings = await fetchReadings()
 
       if (updatedReadings === null) {
@@ -245,6 +246,132 @@ function Dashboard() {
   }
 
   // ==========================================
+  // START EDITING
+  // ==========================================
+
+  const handleEditClick = (reading) => {
+    setEditingReadingId(reading.id)
+    setEditGlucoseLevel(String(reading.glucose_level))
+    setError('')
+    setSuccess('')
+  }
+
+  // ==========================================
+  // CANCEL EDITING
+  // ==========================================
+
+  const handleCancelEdit = () => {
+    setEditingReadingId(null)
+    setEditGlucoseLevel('')
+    setError('')
+  }
+
+  // ==========================================
+  // UPDATE GLUCOSE READING
+  // ==========================================
+
+  const handleUpdateReading = async (reading) => {
+    setError('')
+    setSuccess('')
+
+    const glucose = Number(editGlucoseLevel)
+
+    if (
+      editGlucoseLevel === '' ||
+      !Number.isInteger(glucose)
+    ) {
+      setError('Please enter a valid whole-number glucose reading.')
+      return
+    }
+
+    if (glucose < 40 || glucose > 600) {
+      setError('Glucose level must be between 40 and 600 mg/dL.')
+      return
+    }
+
+    try {
+      setActionLoading(true)
+
+      await api.put(`/readings/${reading.id}`, {
+        reading_date: selectedDate,
+        slot: reading.slot,
+        glucose_level: glucose
+      })
+
+      const updatedReadings = await fetchReadings()
+
+      setEditingReadingId(null)
+      setEditGlucoseLevel('')
+
+      if (updatedReadings === null) {
+        setSuccess(
+          'Reading updated, but the list could not be refreshed.'
+        )
+      } else {
+        setSuccess(
+          `${reading.slot} reading updated successfully.`
+        )
+      }
+
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        'Unable to update reading. Please try again.'
+      )
+
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // ==========================================
+  // DELETE GLUCOSE READING
+  // ==========================================
+
+  const handleDeleteReading = async (reading) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the ${reading.slot} reading for ${selectedDate}?`
+    )
+
+    if (!confirmed) return
+
+    setError('')
+    setSuccess('')
+
+    try {
+      setActionLoading(true)
+
+      await api.delete(`/readings/${reading.id}`)
+
+      const updatedReadings = await fetchReadings()
+
+      if (updatedReadings === null) {
+        setSuccess(
+          'Reading deleted, but the list could not be refreshed.'
+        )
+      } else {
+        setSuccess(
+          `${reading.slot} reading deleted successfully.`
+        )
+      }
+
+      if (editingReadingId === reading.id) {
+        setEditingReadingId(null)
+        setEditGlucoseLevel('')
+      }
+
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        'Unable to delete reading. Please try again.'
+      )
+
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // ==========================================
   // LOGOUT
   // ==========================================
 
@@ -254,38 +381,6 @@ function Dashboard() {
 
     navigate('/login')
   }
-
-  // ==========================================
-  // SELECTED DATE SUMMARY CARDS
-  // ==========================================
-
-  // Get readings only for the selected date
-  const selectedDateReadings = readings.filter(reading =>
-    normalizeReadingDate(reading.reading_date) === selectedDate
-  )
-
-  // Extract glucose values for the selected date
-  const selectedDateValues = selectedDateReadings.map(
-    reading => Number(reading.glucose_level)
-  )
-
-  // Calculate average only when readings exist
-  const average = selectedDateValues.length
-    ? (
-        selectedDateValues.reduce((sum, value) => sum + value, 0) /
-        selectedDateValues.length
-      ).toFixed(1)
-    : '--'
-
-  // Highest reading
-  const highest = selectedDateValues.length
-    ? Math.max(...selectedDateValues)
-    : '--'
-
-  // Lowest reading
-  const lowest = selectedDateValues.length
-    ? Math.min(...selectedDateValues)
-    : '--'
 
   // ==========================================
   // DISPLAY
@@ -344,59 +439,15 @@ function Dashboard() {
                 : 'U'}
             </div>
 
-            <span>{user.name || 'User'}</span>
+            <span>Welcome back, {user.name || 'there'}</span>
 
           </div>
 
         </header>
 
-        {/* WELCOME SECTION */}
-        <section className="welcome-section">
+        <div className="reading-panels">
 
-          <h2>
-            Good evening, {user.name || 'there'}! 👋
-          </h2>
-
-          <p>
-            Keep track of your glucose levels and stay informed
-            about your daily readings.
-          </p>
-
-        </section>
-
-        {/* FOUR SUMMARY CARDS */}
-        <section className="summary-section">
-
-          <div className="summary-card">
-            <p>Readings for Selected Date</p>
-            <h2>{selectedDateReadings.length}/4</h2>
-            <span>Readings recorded</span>
-          </div>
-
-          <div className="summary-card">
-            <p>Average Glucose</p>
-            <h2>{average}</h2>
-            <span>mg/dL</span>
-          </div>
-
-          <div className="summary-card">
-            <p>Highest Reading</p>
-            <h2>{highest}</h2>
-            <span>mg/dL</span>
-          </div>
-
-          <div className="summary-card">
-            <p>Lowest Reading</p>
-            <h2>{lowest}</h2>
-            <span>mg/dL</span>
-          </div>
-
-        </section>
-
-        {/* =====================================
-            1. SELECT READING DATE
-        ===================================== */}
-
+        {/* 1. SELECT READING DATE */}
         <section className="reading-form-section">
 
           <div className="section-heading">
@@ -424,6 +475,8 @@ function Dashboard() {
                 setError('')
                 setSuccess('')
                 setGlucoseLevel('')
+                setEditingReadingId(null)
+                setEditGlucoseLevel('')
               }}
             />
 
@@ -431,10 +484,7 @@ function Dashboard() {
 
         </section>
 
-        {/* =====================================
-            2. ADD GLUCOSE READING
-        ===================================== */}
-
+        {/* 2. ADD GLUCOSE READING */}
         <section className="reading-form-section">
 
           <div className="section-heading">
@@ -517,7 +567,7 @@ function Dashboard() {
               <button
                 type="submit"
                 className="add-reading-button"
-                disabled={saving || loading}
+                disabled={saving || loading || actionLoading}
               >
                 {saving ? 'Saving...' : 'Add Reading'}
               </button>
@@ -536,10 +586,9 @@ function Dashboard() {
 
         </section>
 
-        {/* =====================================
-            3. DAILY READING STATUS
-        ===================================== */}
+        </div>
 
+        {/* 3. DAILY READING STATUS */}
         <section className="daily-slots-section">
 
           <div className="section-heading">
@@ -566,25 +615,106 @@ function Dashboard() {
                 return (
                   <div className="daily-slot" key={item}>
 
-                    <div>
+                    <div className="daily-slot-details">
+
                       <h3>{item}</h3>
 
-                      {reading && (
-                        <p>
-                          {reading.glucose_level} mg/dL
-                        </p>
+                      {reading && editingReadingId === reading.id ? (
+
+                        <div className="edit-reading-field">
+
+                          <label htmlFor={`edit-${reading.id}`}>
+                            Glucose Level (mg/dL)
+                          </label>
+
+                          <input
+                            id={`edit-${reading.id}`}
+                            type="number"
+                            min="40"
+                            max="600"
+                            step="1"
+                            value={editGlucoseLevel}
+                            onChange={(e) => {
+                              setEditGlucoseLevel(e.target.value)
+                              setError('')
+                            }}
+                          />
+
+                          <div className="reading-actions">
+
+                            <button
+                              type="button"
+                              className="save-edit-button"
+                              disabled={actionLoading}
+                              onClick={() => handleUpdateReading(reading)}
+                            >
+                              {actionLoading ? 'Saving...' : 'Save'}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="cancel-edit-button"
+                              disabled={actionLoading}
+                              onClick={handleCancelEdit}
+                            >
+                              Cancel
+                            </button>
+
+                          </div>
+
+                        </div>
+
+                      ) : (
+
+                        reading && (
+                          <p>
+                            {reading.glucose_level} mg/dL
+                          </p>
+                        )
+
                       )}
+
                     </div>
 
-                    <span
-                      className={
-                        reading
-                          ? 'slot-recorded'
-                          : 'slot-pending'
-                      }
-                    >
-                      {reading ? 'Recorded' : 'Pending'}
-                    </span>
+                    <div className="daily-slot-right">
+
+                      <span
+                        className={
+                          reading
+                            ? 'slot-recorded'
+                            : 'slot-pending'
+                        }
+                      >
+                        {reading ? 'Recorded' : 'Pending'}
+                      </span>
+
+                      {reading && editingReadingId !== reading.id && (
+
+                        <div className="reading-actions">
+
+                          <button
+                            type="button"
+                            className="edit-reading-button"
+                            disabled={actionLoading}
+                            onClick={() => handleEditClick(reading)}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            className="delete-reading-button"
+                            disabled={actionLoading}
+                            onClick={() => handleDeleteReading(reading)}
+                          >
+                            Delete
+                          </button>
+
+                        </div>
+
+                      )}
+
+                    </div>
 
                   </div>
                 )

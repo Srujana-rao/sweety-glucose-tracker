@@ -1,0 +1,54 @@
+.report-stats {
+  margin-top: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-stats.wide {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.report-stats.wide + .daily-slots-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.report-stats.wide + .daily-slots-list .daily-slot {
+  padding: 12px;
+}
+
+.report-status {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #1a2b3c;
+}
+
+.report-empty {
+  margin-top: 18px;
+  font-size: 16px;
+  color: #1a2b3c;
+}
+
+.report-stats + .daily-slots-list,
+.report-stats + .report-empty {
+  margin-top: 18px;
+}
+
+@media (max-width: 1100px) {
+  .report-stats,
+  .report-stats.wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .report-stats,
+  .report-stats.wide {
+    grid-template-columns: 1fr;
+  }
+
+  .report-stats.wide + .daily-slots-list {
+    grid-template-columns: 1fr;
+  }
+}
