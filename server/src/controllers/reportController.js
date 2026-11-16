@@ -257,7 +257,73 @@ const getReports = async (req, res) => {
   }
 }
 
+const getMonthlyTrends = async (req, res) => {
+  try {
+    const { month } = req.query
+
+    if (
+      typeof month !== 'string' ||
+      !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) ||
+      Number(month.slice(0, 4)) < 1
+    ) {
+      return res.status(400).json({
+        message: 'Please enter a valid month in YYYY-MM format'
+      })
+    }
+
+    const [year, monthNumber] = month.split('-').map(Number)
+    const daysInMonth = [
+      31,
+      year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28,
+      31,
+      30,
+      31,
+      30,
+      31,
+      31,
+      30,
+      31,
+      30,
+      31
+    ]
+    const lastDay = daysInMonth[monthNumber - 1]
+    const from = `${month}-01`
+    const to = `${month}-${String(lastDay).padStart(2, '0')}`
+
+    const result = await pool.query(
+      `SELECT
+         reading_date::text AS reading_date,
+         AVG(glucose_level) AS average,
+         COUNT(*) AS count
+       FROM readings
+       WHERE user_id = $1
+         AND reading_date >= $2::date
+         AND reading_date <= LEAST($3::date, CURRENT_DATE)
+       GROUP BY reading_date
+       ORDER BY reading_date`,
+      [req.user.id, from, to]
+    )
+
+    return res.status(200).json({
+      message: 'Monthly trends retrieved successfully',
+      month,
+      dateRange: { from, to },
+      dailyAverages: result.rows.map((reading) => ({
+        reading_date: reading.reading_date,
+        average: Number(reading.average),
+        count: Number(reading.count)
+      }))
+    })
+  } catch (error) {
+    console.error('Get monthly trends error:', error.message)
+    return res.status(500).json({
+      message: 'Server error while retrieving monthly trends'
+    })
+  }
+}
+
 module.exports = {
   getReports,
-  getReportRanges
+  getReportRanges,
+  getMonthlyTrends
 }

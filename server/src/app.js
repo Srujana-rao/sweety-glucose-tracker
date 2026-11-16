@@ -7,6 +7,7 @@ require('./config/db')
 const authRoutes = require('./routes/authRoutes')
 const readingRoutes = require('./routes/readingRoutes')
 const reportRoutes = require('./routes/reportRoutes')
+const profileRoutes = require('./routes/profileRoutes')
 
 const app = express()
 
@@ -20,5 +21,6 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/readings', readingRoutes)
 app.use('/api/reports', reportRoutes)
+app.use('/api/profile', profileRoutes)
 
 module.exports = app

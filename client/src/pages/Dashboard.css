@@ -81,6 +81,20 @@
   background: #ffe4e4;
 }
 
+.sidebar-nav .sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 0;
+  text-align: left;
+}
+
+.nav-link svg,
+.sidebar-logout svg {
+  flex: 0 0 20px;
+}
+
 /* Main Content */
 
 .dashboard-main {

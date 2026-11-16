@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 800" role="img" aria-labelledby="title description">
+  <title id="title">Glucose meter illustration</title>
+  <desc id="description">A digital glucose meter, lancing pen, and test strips on a soft blue background.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#edf7ff"/>
+      <stop offset="1" stop-color="#d8edfb"/>
+    </linearGradient>
+    <linearGradient id="meter" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#343446"/>
+      <stop offset="1" stop-color="#171825"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eff8df"/>
+      <stop offset="1" stop-color="#dce8c8"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#43365f" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="900" height="800" rx="38" fill="url(#background)"/>
+  <circle cx="756" cy="142" r="95" fill="#ffffff" opacity=".28"/>
+  <circle cx="156" cy="660" r="126" fill="#b9ddf4" opacity=".28"/>
+  <ellipse cx="432" cy="650" rx="310" ry="48" fill="#8f78b6" opacity=".14"/>
+
+  <g filter="url(#shadow)" transform="rotate(-9 382 388)">
+    <rect x="150" y="115" width="430" height="500" rx="82" fill="url(#meter)"/>
+    <rect x="182" y="148" width="366" height="434" rx="62" fill="#4a4b5e" opacity=".55"/>
+    <rect x="205" y="188" width="320" height="202" rx="26" fill="#141620"/>
+    <rect x="220" y="203" width="290" height="172" rx="17" fill="url(#screen)"/>
+    <text x="244" y="244" fill="#66745b" font-family="Arial, sans-serif" font-size="17" letter-spacing="2">GLUCOSE</text>
+    <path d="M253 281h221" stroke="#93a283" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+    <path d="M253 306h155" stroke="#93a283" stroke-width="4" stroke-linecap="round" opacity=".35"/>
+    <circle cx="281" cy="478" r="42" fill="#222431" stroke="#68697a" stroke-width="5"/>
+    <circle cx="452" cy="478" r="42" fill="#222431" stroke="#68697a" stroke-width="5"/>
+    <path d="m272 478 18-13v26z" fill="#c6c5d3"/>
+    <path d="m443 478 18-13v26z" fill="#c6c5d3"/>
+    <text x="431" y="548" fill="#e0dfeb" font-family="Arial, sans-serif" font-size="27" font-weight="700">M</text>
+  </g>
+
+  <g filter="url(#shadow)" transform="rotate(5 700 398)">
+    <rect x="654" y="142" width="86" height="428" rx="42" fill="#373746"/>
+    <rect x="670" y="169" width="54" height="57" rx="18" fill="#f3f1fa"/>
+    <rect x="671" y="226" width="52" height="255" rx="24" fill="#242532"/>
+    <rect x="681" y="273" width="32" height="119" rx="15" fill="#a5a4b3"/>
+    <rect x="681" y="392" width="32" height="54" rx="12" fill="#dedce7"/>
+    <path d="M674 549h46l-11 55h-24z" fill="#181923"/>
+    <path d="M689 605h16l-8 28z" fill="#d5d3df"/>
+  </g>
+
+  <g filter="url(#shadow)" transform="rotate(-22 357 663)">
+    <rect x="260" y="622" width="190" height="44" rx="12" fill="#fff"/>
+    <rect x="279" y="629" width="30" height="30" rx="5" fill="#292b37"/>
+    <rect x="291" y="635" width="5" height="18" fill="#f2d879"/>
+    <path d="M450 636h24v16h-24z" fill="#e4dcff"/>
+  </g>
+  <g filter="url(#shadow)" transform="rotate(13 519 690)">
+    <rect x="468" y="664" width="158" height="40" rx="11" fill="#fff"/>
+    <rect x="485" y="670" width="26" height="28" rx="5" fill="#292b37"/>
+    <rect x="495" y="675" width="5" height="18" fill="#f2d879"/>
+    <path d="M626 677h20v14h-20z" fill="#e4dcff"/>
+  </g>
+</svg>

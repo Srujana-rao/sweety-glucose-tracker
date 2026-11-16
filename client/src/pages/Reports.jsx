@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import api from '../services/api'
+import Sidebar from '../components/Sidebar'
 import './Dashboard.css'
 import './Reports.css'
+
+const VisualAnalytics = lazy(() => import('./VisualAnalytics'))
 
 const getToday = () => {
   const today = new Date()
@@ -74,7 +76,6 @@ function ReportStats({ summary, wide = false }) {
 }
 
 function Reports() {
-  const navigate = useNavigate()
   const requestId = useRef(0)
 
   const user = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -117,36 +118,9 @@ function Reports() {
     fetchReport()
   }, [selectedDate])
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('token')
-    sessionStorage.removeItem('user')
-    navigate('/login')
-  }
-
   return (
     <div className="dashboard-page">
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <h2>Sweety</h2>
-          <p>Blood Glucose Tracker</p>
-        </div>
-
-        <nav className="sidebar-nav">
-          <Link to="/dashboard" className="nav-link">
-            <span>▦</span>
-            Dashboard
-          </Link>
-
-          <Link to="/reports" className="nav-link active">
-            <span>▤</span>
-            Reports
-          </Link>
-        </nav>
-
-        <button className="logout-button" onClick={handleLogout}>
-          ↪ Logout
-        </button>
-      </aside>
+      <Sidebar />
 
       <main className="dashboard-main">
         <header className="dashboard-header">
@@ -255,6 +229,15 @@ function Reports() {
             </div>
           </>
         )}
+
+        <Suspense fallback={<p className="report-status">Loading visual analytics...</p>}>
+          <VisualAnalytics
+            selectedDate={selectedDate}
+            dailyReadings={report?.daily?.readings || []}
+            dailyLoading={loading}
+            dailyError={error}
+          />
+        </Suspense>
       </main>
     </div>
   )

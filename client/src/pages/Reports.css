@@ -30,6 +30,66 @@
   color: #1a2b3c;
 }
 
+.analytics-section {
+  margin-top: 24px;
+}
+
+.analytics-chart-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #dce7f0;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.monthly-trend-card {
+  margin-top: 22px;
+}
+
+.monthly-trend-card .section-heading,
+.analytics-chart-card .section-heading {
+  margin-bottom: 12px;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 300px;
+}
+
+.chart-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.monthly-chart-container {
+  height: 350px;
+}
+
+.chart-note {
+  margin: 4px 0 0;
+  color: #5a6b7d;
+  font-size: 13px;
+}
+
+.chart-tooltip {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid #dce7f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1a2b3c;
+  box-shadow: 0 6px 18px rgba(120, 150, 180, 0.12);
+  font-size: 13px;
+}
+
 .report-stats + .daily-slots-list,
 .report-stats + .report-empty {
   margin-top: 18px;
@@ -50,5 +110,17 @@
 
   .report-stats.wide + .daily-slots-list {
     grid-template-columns: 1fr;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-chart-card {
+    padding: 14px;
+  }
+
+  .chart-container {
+    height: 260px;
   }
 }

@@ -142,11 +142,73 @@ const addReading = async (req, res) => {
 
 const getReadings = async (req, res) => {
   try {
+    const hasPagination =
+      req.query.page !== undefined || req.query.limit !== undefined
+
+    if (hasPagination) {
+      const pageValue = req.query.page === undefined ? '1' : req.query.page
+      const limitValue = req.query.limit === undefined ? '20' : req.query.limit
+      const isPositiveInteger = (value) =>
+        typeof value === 'string' &&
+        /^[1-9]\d*$/.test(value) &&
+        Number.isSafeInteger(Number(value))
+
+      if (!isPositiveInteger(pageValue) || !isPositiveInteger(limitValue)) {
+        return res.status(400).json({
+          message: 'Page and limit must be positive integers'
+        })
+      }
+
+      const page = Number(pageValue)
+      const limit = Number(limitValue)
+
+      if (limit > 100) {
+        return res.status(400).json({
+          message: 'Limit cannot exceed 100'
+        })
+      }
+
+      const offset = (page - 1) * limit
+      if (!Number.isSafeInteger(offset)) {
+        return res.status(400).json({
+          message: 'Page is too large'
+        })
+      }
+
+      const [countResult, readingsResult] = await Promise.all([
+        pool.query(
+          'SELECT COUNT(*) FROM readings WHERE user_id = $1',
+          [req.user.id]
+        ),
+        pool.query(
+          `SELECT ${readingColumns}
+           FROM readings
+           WHERE user_id = $1
+           ORDER BY reading_date DESC, created_at DESC, id DESC
+           LIMIT $2 OFFSET $3`,
+          [req.user.id, limit, offset]
+        )
+      ])
+
+      const totalRecords = Number(countResult.rows[0].count)
+
+      return res.status(200).json({
+        message: 'Readings retrieved successfully',
+        readings: readingsResult.rows,
+        pagination: {
+          currentPage: page,
+          limit,
+          totalRecords,
+          totalPages: Math.ceil(totalRecords / limit)
+        }
+      })
+    }
+
     const result = await pool.query(
       `SELECT ${readingColumns}
        FROM readings
        WHERE user_id = $1
-       ORDER BY reading_date DESC, created_at DESC`,
+       ORDER BY reading_date DESC, created_at DESC, id DESC`,
       [req.user.id]
     )
 

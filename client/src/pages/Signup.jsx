@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import glucoseMeterImage from '../assets/glucose-meter.svg'
 import API from '../services/api'
+import {
+  clearRememberedEmail,
+  saveRememberedEmail
+} from '../utils/rememberedEmail'
 import './Auth.css'
-
-const REMEMBER_KEY = 'sweety_remembered_credentials'
 
 function Signup() {
   const [name, setName] = useState('')
@@ -33,10 +36,9 @@ function Signup() {
       })
 
       if (rememberMe) {
-        localStorage.setItem(
-          REMEMBER_KEY,
-          JSON.stringify({ email, password })
-        )
+        saveRememberedEmail(email)
+      } else {
+        clearRememberedEmail()
       }
 
       setSuccess(response.data.message)
@@ -138,7 +140,7 @@ function Signup() {
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
-              <span>Remember me</span>
+              <span>Remember email</span>
             </label>
 
             <button type="submit" className="auth-submit" disabled={loading}>
@@ -167,7 +169,9 @@ function Signup() {
           </div>
         </div>
 
-        <div className="auth-visual" aria-hidden="true" />
+        <div className="auth-visual" aria-hidden="true">
+          <img className="auth-illustration" src={glucoseMeterImage} alt="" />
+        </div>
       </div>
     </div>
   )

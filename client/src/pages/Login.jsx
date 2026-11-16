@@ -1,44 +1,25 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import glucoseMeterImage from '../assets/glucose-meter.svg'
 import API from '../services/api'
+import {
+  clearRememberedEmail,
+  getRememberedEmail,
+  saveRememberedEmail
+} from '../utils/rememberedEmail'
 import './Auth.css'
 
-const REMEMBER_KEY = 'sweety_remembered_credentials'
-
-function getRememberedCredentials() {
-  try {
-    const saved = localStorage.getItem(REMEMBER_KEY)
-    return saved ? JSON.parse(saved) : null
-  } catch {
-    return null
-  }
-}
-
 function Login() {
-  const [email, setEmail] = useState('')
+  const [rememberedEmail] = useState(getRememberedEmail)
+  const [email, setEmail] = useState(rememberedEmail)
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
+  const [rememberMe, setRememberMe] = useState(Boolean(rememberedEmail))
   const [showPassword, setShowPassword] = useState(false)
 
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
-
-  const handleEmailChange = (value) => {
-    setEmail(value)
-
-    const remembered = getRememberedCredentials()
-    const typedEmail = value.trim().toLowerCase()
-
-    if (
-      remembered?.email &&
-      remembered?.password &&
-      remembered.email.trim().toLowerCase() === typedEmail
-    ) {
-      setPassword(remembered.password)
-    }
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -53,10 +34,9 @@ function Login() {
       })
 
       if (rememberMe) {
-        localStorage.setItem(
-          REMEMBER_KEY,
-          JSON.stringify({ email, password })
-        )
+        saveRememberedEmail(email)
+      } else {
+        clearRememberedEmail()
       }
 
       // Store authentication details temporarily
@@ -102,7 +82,7 @@ function Login() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 autoComplete="username"
                 required
               />
@@ -150,7 +130,7 @@ function Login() {
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
-              <span>Remember me</span>
+              <span>Remember email</span>
             </label>
 
             <button type="submit" className="auth-submit" disabled={loading}>
@@ -179,7 +159,9 @@ function Login() {
           </div>
         </div>
 
-        <div className="auth-visual" aria-hidden="true" />
+        <div className="auth-visual" aria-hidden="true">
+          <img className="auth-illustration" src={glucoseMeterImage} alt="" />
+        </div>
       </div>
     </div>
   )

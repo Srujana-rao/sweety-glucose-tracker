@@ -1,0 +1,150 @@
+.history-page-section {
+  margin-top: 28px;
+}
+
+.history-feedback,
+.history-state {
+  margin-top: 20px;
+}
+
+.history-state {
+  color: #1a2b3c;
+}
+
+.history-table-wrap {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #1a2b3c;
+}
+
+.history-table th,
+.history-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2ebf3;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.history-table th {
+  color: #1a2b3c;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-table tbody tr:hover {
+  background: #f8fbfd;
+}
+
+.history-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.history-edit-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 14px;
+  padding: 8px 0;
+}
+
+.history-edit-form .form-field {
+  min-width: 0;
+}
+
+.history-edit-form .form-field input,
+.history-edit-form .form-field select {
+  min-width: 0;
+}
+
+.history-edit-form .history-row-actions {
+  grid-column: 1 / -1;
+}
+
+.history-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  color: #1a2b3c;
+  font-size: 14px;
+}
+
+.history-pagination > div {
+  display: flex;
+  gap: 8px;
+}
+
+.history-pagination button {
+  border: 1px solid #d5e2ed;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #1a2b3c;
+  font: inherit;
+  cursor: pointer;
+}
+
+.history-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 750px) {
+  .history-table thead {
+    display: none;
+  }
+
+  .history-table,
+  .history-table tbody,
+  .history-table tr,
+  .history-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .history-table tr {
+    padding: 10px 0;
+    border-bottom: 1px solid #e2ebf3;
+  }
+
+  .history-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 8px 4px;
+    border-bottom: 0;
+  }
+
+  .history-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+  }
+
+  .history-table td[colspan] {
+    display: block;
+  }
+
+  .history-table td[colspan]::before {
+    content: none;
+  }
+
+  .history-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .history-edit-form .history-row-actions {
+    grid-column: auto;
+  }
+
+  .history-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

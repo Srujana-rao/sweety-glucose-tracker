@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
 import api from '../services/api'
+import Sidebar from '../components/Sidebar'
 import './Dashboard.css'
 
 const allowedSlots = [
@@ -29,8 +29,6 @@ const normalizeReadingDate = (value) => {
 }
 
 function Dashboard() {
-  const navigate = useNavigate()
-
   const user = JSON.parse(
     sessionStorage.getItem('user') || '{}'
   )
@@ -140,6 +138,18 @@ function Dashboard() {
   const dailyReadings = readings.filter(reading =>
     normalizeReadingDate(reading.reading_date) === selectedDate
   )
+  const selectedDateValues = dailyReadings.map(
+    (reading) => Number(reading.glucose_level)
+  )
+  const average = selectedDateValues.length
+    ? (selectedDateValues.reduce((sum, value) => sum + value, 0) / selectedDateValues.length).toFixed(1)
+    : '--'
+  const highest = selectedDateValues.length
+    ? Math.max(...selectedDateValues)
+    : '--'
+  const lowest = selectedDateValues.length
+    ? Math.min(...selectedDateValues)
+    : '--'
 
   const getReadingForSlot = (readingSlot) => {
     return dailyReadings.find(
@@ -372,53 +382,13 @@ function Dashboard() {
   }
 
   // ==========================================
-  // LOGOUT
-  // ==========================================
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('token')
-    sessionStorage.removeItem('user')
-
-    navigate('/login')
-  }
-
-  // ==========================================
   // DISPLAY
   // ==========================================
 
   return (
     <div className="dashboard-page">
 
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-
-        <div className="sidebar-logo">
-          <h2>Sweety</h2>
-          <p>Blood Glucose Tracker</p>
-        </div>
-
-        <nav className="sidebar-nav">
-
-          <Link to="/dashboard" className="nav-link active">
-            <span>▦</span>
-            Dashboard
-          </Link>
-
-          <Link to="/reports" className="nav-link">
-            <span>▤</span>
-            Reports
-          </Link>
-
-        </nav>
-
-        <button
-          className="logout-button"
-          onClick={handleLogout}
-        >
-          ↪ Logout
-        </button>
-
-      </aside>
+      <Sidebar />
 
       {/* MAIN CONTENT */}
       <main className="dashboard-main">
@@ -444,6 +414,29 @@ function Dashboard() {
           </div>
 
         </header>
+
+        <section className="summary-section">
+          <div className="summary-card">
+            <p>Readings for Selected Date</p>
+            <h2>{dailyReadings.length}/4</h2>
+            <span>Readings recorded</span>
+          </div>
+          <div className="summary-card">
+            <p>Average Glucose</p>
+            <h2>{average}</h2>
+            <span>mg/dL</span>
+          </div>
+          <div className="summary-card">
+            <p>Highest Reading</p>
+            <h2>{highest}</h2>
+            <span>mg/dL</span>
+          </div>
+          <div className="summary-card">
+            <p>Lowest Reading</p>
+            <h2>{lowest}</h2>
+            <span>mg/dL</span>
+          </div>
+        </section>
 
         <div className="reading-panels">
 
