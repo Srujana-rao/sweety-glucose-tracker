@@ -179,6 +179,49 @@ function VisualAnalytics({
 
       {!trendLoading && !trendError && trendData && (
         <>
+          <div className="analytics-grid">
+            <section className="analytics-chart-card">
+              <div className="section-heading">
+                <div>
+                  <h2>Daily Slot Comparison</h2>
+                  <p>{formatDisplayDate(selectedDate)}</p>
+                </div>
+              </div>
+
+              {dailyLoading ? (
+                <p className="report-empty">Loading selected-date readings...</p>
+              ) : dailyError ? (
+                <p className="report-empty">Daily chart is unavailable.</p>
+              ) : dailySlotData.every((item) => item.glucose_level === null) ? (
+                <p className="report-empty">No readings recorded for this date.</p>
+              ) : (
+                <div className="chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dailySlotData} margin={{ top: 16, right: 12, bottom: 48, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#dce7f0" />
+                      <XAxis
+                        dataKey="slot"
+                        interval={0}
+                        angle={-22}
+                        textAnchor="end"
+                        height={64}
+                        tick={{ fill: '#1a2b3c', fontSize: 11 }}
+                      />
+                      <YAxis
+                        width={48}
+                        tick={{ fill: '#1a2b3c', fontSize: 12 }}
+                        label={{ value: 'mg/dL', angle: -90, position: 'insideLeft', fill: '#1a2b3c' }}
+                      />
+                      <Tooltip formatter={(value) => [`${value} mg/dL`, 'Glucose']} />
+                      <Legend />
+                      <Bar dataKey="glucose_level" name="Glucose" fill="#6ba8d0" isAnimationActive={false} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </section>
+          </div>
+
           <section className="analytics-chart-card monthly-trend-card">
             <div className="section-heading">
               <div>
@@ -231,50 +274,6 @@ function VisualAnalytics({
               </div>
             </div>
           </section>
-
-          <div className="analytics-grid">
-            <section className="analytics-chart-card">
-              <div className="section-heading">
-                <div>
-                  <h2>Daily Slot Comparison</h2>
-                  <p>{formatDisplayDate(selectedDate)}</p>
-                </div>
-              </div>
-
-              {dailyLoading ? (
-                <p className="report-empty">Loading selected-date readings...</p>
-              ) : dailyError ? (
-                <p className="report-empty">Daily chart is unavailable.</p>
-              ) : dailySlotData.every((item) => item.glucose_level === null) ? (
-                <p className="report-empty">No readings recorded for this date.</p>
-              ) : (
-                <div className="chart-container">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dailySlotData} margin={{ top: 16, right: 12, bottom: 48, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#dce7f0" />
-                      <XAxis
-                        dataKey="slot"
-                        interval={0}
-                        angle={-22}
-                        textAnchor="end"
-                        height={64}
-                        tick={{ fill: '#1a2b3c', fontSize: 11 }}
-                      />
-                      <YAxis
-                        width={48}
-                        tick={{ fill: '#1a2b3c', fontSize: 12 }}
-                        label={{ value: 'mg/dL', angle: -90, position: 'insideLeft', fill: '#1a2b3c' }}
-                      />
-                      <Tooltip formatter={(value) => [`${value} mg/dL`, 'Glucose']} />
-                      <Legend />
-                      <Bar dataKey="glucose_level" name="Glucose" fill="#6ba8d0" isAnimationActive={false} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </section>
-
-          </div>
         </>
       )}
     </section>

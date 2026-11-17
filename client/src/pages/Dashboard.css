@@ -15,7 +15,11 @@
 /* Sidebar */
 
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 250px;
+  height: 100vh;
   background: rgba(255, 255, 255, 0.92);
   padding: 28px 20px;
   display: flex;
@@ -23,6 +27,8 @@
   border-right: 1px solid #d9e4ef;
   flex-shrink: 0;
   backdrop-filter: blur(8px);
+  z-index: 20;
+  overflow-y: auto;
 }
 
 .sidebar-logo h2 {
@@ -99,6 +105,7 @@
 
 .dashboard-main {
   flex: 1;
+  margin-left: 250px;
   padding: 32px 40px;
   min-width: 0;
 }
@@ -219,8 +226,12 @@
   }
 
   .sidebar {
+    position: static;
     width: 100%;
+    height: auto;
     padding: 16px;
+    border-right: none;
+    border-bottom: 1px solid #d9e4ef;
   }
 
   .sidebar-nav {
@@ -234,6 +245,7 @@
   }
 
   .dashboard-main {
+    margin-left: 0;
     padding: 20px 16px;
   }
 

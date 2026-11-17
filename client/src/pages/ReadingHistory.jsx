@@ -5,19 +5,21 @@ import './Dashboard.css'
 import './ReadingHistory.css'
 
 const pageSize = 20
-const readingSlots = [
-  'Morning fasting',
-  'After breakfast',
-  'After lunch',
-  'After dinner'
-]
 
-const getToday = () => {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+const formatEntryTime = (value) => {
+  if (!value) return '—'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+
+  return new Intl.DateTimeFormat('en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  }).format(date)
 }
 
 function ReadingHistory() {
@@ -28,17 +30,8 @@ function ReadingHistory() {
     totalPages: 0,
     totalRecords: 0
   })
-  const [editingId, setEditingId] = useState(null)
-  const [editValues, setEditValues] = useState({
-    reading_date: '',
-    slot: '',
-    glucose_level: ''
-  })
   const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     let active = true
@@ -78,84 +71,7 @@ function ReadingHistory() {
     return () => {
       active = false
     }
-  }, [page, refreshKey])
-
-  const startEditing = (reading) => {
-    setEditingId(reading.id)
-    setEditValues({
-      reading_date: String(reading.reading_date).slice(0, 10),
-      slot: reading.slot,
-      glucose_level: String(reading.glucose_level)
-    })
-    setError('')
-    setSuccess('')
-  }
-
-  const updateEditValue = (event) => {
-    const { name, value } = event.target
-    setEditValues((current) => ({ ...current, [name]: value }))
-  }
-
-  const saveEdit = async (event, reading) => {
-    event.preventDefault()
-    setError('')
-    setSuccess('')
-
-    const glucoseLevel = Number(editValues.glucose_level)
-    if (
-      !editValues.reading_date ||
-      editValues.reading_date > getToday() ||
-      !readingSlots.includes(editValues.slot) ||
-      !Number.isInteger(glucoseLevel) ||
-      glucoseLevel < 40 ||
-      glucoseLevel > 600
-    ) {
-      setError('Enter a valid past or current date, slot, and glucose value between 40 and 600.')
-      return
-    }
-
-    setActionLoading(true)
-    try {
-      await api.put(`/readings/${reading.id}`, {
-        reading_date: editValues.reading_date,
-        slot: editValues.slot,
-        glucose_level: glucoseLevel
-      })
-      setEditingId(null)
-      setSuccess('Reading updated successfully.')
-      setRefreshKey((key) => key + 1)
-    } catch (requestError) {
-      setError(
-        requestError.response?.data?.message ||
-        'Unable to update this reading. Please try again.'
-      )
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const deleteReading = async (reading) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete the ${reading.slot} reading for ${reading.reading_date}?`
-    )
-    if (!confirmed) return
-
-    setError('')
-    setSuccess('')
-    setActionLoading(true)
-    try {
-      await api.delete(`/readings/${reading.id}`)
-      setSuccess('Reading deleted successfully.')
-      setRefreshKey((key) => key + 1)
-    } catch (requestError) {
-      setError(
-        requestError.response?.data?.message ||
-        'Unable to delete this reading. Please try again.'
-      )
-    } finally {
-      setActionLoading(false)
-    }
-  }
+  }, [page])
 
   return (
     <div className="dashboard-page">
@@ -165,12 +81,11 @@ function ReadingHistory() {
         <header className="dashboard-header">
           <div>
             <h1>Reading History</h1>
-            <p>Review and manage your recorded glucose readings.</p>
+            <p>Review your recorded glucose readings.</p>
           </div>
         </header>
 
         {error && <p className="form-error history-feedback">{error}</p>}
-        {success && <p className="form-success history-feedback">{success}</p>}
 
         <section className="reading-form-section history-page-section">
           {loading ? (
@@ -185,100 +100,16 @@ function ReadingHistory() {
                     <th scope="col">Reading date</th>
                     <th scope="col">Slot</th>
                     <th scope="col">Glucose level</th>
-                    <th scope="col">Actions</th>
+                    <th scope="col">Entered At</th>
                   </tr>
                 </thead>
                 <tbody>
                   {readings.map((reading) => (
                     <tr key={reading.id}>
-                      {editingId === reading.id ? (
-                        <td colSpan="4">
-                          <form
-                            className="history-edit-form"
-                            onSubmit={(event) => saveEdit(event, reading)}
-                          >
-                            <div className="form-field">
-                              <label htmlFor={`history-date-${reading.id}`}>Reading date</label>
-                              <input
-                                id={`history-date-${reading.id}`}
-                                name="reading_date"
-                                type="date"
-                                max={getToday()}
-                                value={editValues.reading_date}
-                                onChange={updateEditValue}
-                                required
-                              />
-                            </div>
-                            <div className="form-field">
-                              <label htmlFor={`history-slot-${reading.id}`}>Slot</label>
-                              <select
-                                id={`history-slot-${reading.id}`}
-                                name="slot"
-                                value={editValues.slot}
-                                onChange={updateEditValue}
-                                required
-                              >
-                                {readingSlots.map((slot) => (
-                                  <option key={slot} value={slot}>{slot}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="form-field">
-                              <label htmlFor={`history-glucose-${reading.id}`}>Glucose (mg/dL)</label>
-                              <input
-                                id={`history-glucose-${reading.id}`}
-                                name="glucose_level"
-                                type="number"
-                                min="40"
-                                max="600"
-                                step="1"
-                                value={editValues.glucose_level}
-                                onChange={updateEditValue}
-                                required
-                              />
-                            </div>
-                            <div className="history-row-actions">
-                              <button type="submit" className="save-edit-button" disabled={actionLoading}>
-                                {actionLoading ? 'Saving...' : 'Save'}
-                              </button>
-                              <button
-                                type="button"
-                                className="cancel-edit-button"
-                                disabled={actionLoading}
-                                onClick={() => setEditingId(null)}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </form>
-                        </td>
-                      ) : (
-                        <>
-                          <td data-label="Reading date">{String(reading.reading_date).slice(0, 10)}</td>
-                          <td data-label="Slot">{reading.slot}</td>
-                          <td data-label="Glucose level">{reading.glucose_level} mg/dL</td>
-                          <td data-label="Actions">
-                            <div className="history-row-actions">
-                              <button
-                                type="button"
-                                className="edit-reading-button"
-                                disabled={actionLoading}
-                                onClick={() => startEditing(reading)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="delete-reading-button"
-                                disabled={actionLoading}
-                                onClick={() => deleteReading(reading)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
+                      <td data-label="Reading date">{String(reading.reading_date).slice(0, 10)}</td>
+                      <td data-label="Slot">{reading.slot}</td>
+                      <td data-label="Glucose level">{reading.glucose_level} mg/dL</td>
+                      <td data-label="Entered At">{formatEntryTime(reading.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>

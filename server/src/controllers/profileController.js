@@ -41,7 +41,7 @@ const updateProfile = async (req, res) => {
     }
 
     const userResult = await pool.query(
-      'SELECT email, password FROM users WHERE id = $1',
+      'SELECT email FROM users WHERE id = $1',
       [req.user.id]
     )
 
@@ -49,84 +49,24 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'Profile not found' })
     }
 
-    if (body.email !== undefined && typeof body.email !== 'string') {
-      return res.status(400).json({
-        message: 'Please enter a valid email address'
-      })
-    }
-
-    const email = typeof body.email === 'string'
-      ? body.email.trim().toLowerCase()
-      : userResult.rows[0].email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    if (!email || email.length > 254 || !emailRegex.test(email)) {
-      return res.status(400).json({
-        message: 'Please enter a valid email address'
-      })
-    }
-
-    const emailChanged = email !== userResult.rows[0].email.toLowerCase()
-
-    if (emailChanged) {
-      if (typeof body.currentPassword !== 'string' || !body.currentPassword) {
-        return res.status(400).json({
-          message: 'Current password is required to change your email'
-        })
-      }
-
-      const currentPasswordValid = await bcrypt.compare(
-        body.currentPassword,
-        userResult.rows[0].password
-      )
-
-      if (!currentPasswordValid) {
-        return res.status(401).json({
-          message: 'Current password is incorrect'
-        })
-      }
-
-      if (!process.env.JWT_SECRET) {
-        throw new Error('JWT_SECRET is not configured')
-      }
-    }
-
     const result = await pool.query(
       `UPDATE users
-       SET name = $1,
-           email = $2
-       WHERE id = $3
+       SET name = $1
+       WHERE id = $2
        RETURNING ${profileFields}`,
-      [name, email, req.user.id]
+      [name, req.user.id]
     )
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Profile not found' })
     }
 
-    const token = emailChanged
-      ? jwt.sign(
-          { id: req.user.id, email },
-          process.env.JWT_SECRET,
-          { expiresIn: '1d' }
-        )
-      : undefined
-
     return res.status(200).json({
-      message: emailChanged
-        ? 'Profile updated. The new email is not verified.'
-        : 'Profile updated successfully',
-      profile: result.rows[0],
-      ...(token ? { token } : {})
+      message: 'Profile updated successfully',
+      profile: result.rows[0]
     })
   } catch (error) {
     console.error('Update profile error:', error.message)
-
-    if (error.code === '23505') {
-      return res.status(409).json({
-        message: 'Email is already registered'
-      })
-    }
 
     return res.status(500).json({
       message: 'Server error while updating profile'

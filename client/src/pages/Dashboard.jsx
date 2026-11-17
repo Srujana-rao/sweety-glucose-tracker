@@ -138,18 +138,6 @@ function Dashboard() {
   const dailyReadings = readings.filter(reading =>
     normalizeReadingDate(reading.reading_date) === selectedDate
   )
-  const selectedDateValues = dailyReadings.map(
-    (reading) => Number(reading.glucose_level)
-  )
-  const average = selectedDateValues.length
-    ? (selectedDateValues.reduce((sum, value) => sum + value, 0) / selectedDateValues.length).toFixed(1)
-    : '--'
-  const highest = selectedDateValues.length
-    ? Math.max(...selectedDateValues)
-    : '--'
-  const lowest = selectedDateValues.length
-    ? Math.min(...selectedDateValues)
-    : '--'
 
   const getReadingForSlot = (readingSlot) => {
     return dailyReadings.find(
@@ -414,29 +402,6 @@ function Dashboard() {
           </div>
 
         </header>
-
-        <section className="summary-section">
-          <div className="summary-card">
-            <p>Readings for Selected Date</p>
-            <h2>{dailyReadings.length}/4</h2>
-            <span>Readings recorded</span>
-          </div>
-          <div className="summary-card">
-            <p>Average Glucose</p>
-            <h2>{average}</h2>
-            <span>mg/dL</span>
-          </div>
-          <div className="summary-card">
-            <p>Highest Reading</p>
-            <h2>{highest}</h2>
-            <span>mg/dL</span>
-          </div>
-          <div className="summary-card">
-            <p>Lowest Reading</p>
-            <h2>{lowest}</h2>
-            <span>mg/dL</span>
-          </div>
-        </section>
 
         <div className="reading-panels">
 

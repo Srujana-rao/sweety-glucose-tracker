@@ -8,7 +8,6 @@ function Profile() {
   const [profile, setProfile] = useState(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
   const [passwords, setPasswords] = useState({
     currentPassword: '',
     newPassword: '',
@@ -17,6 +16,8 @@ function Profile() {
   const [loading, setLoading] = useState(true)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [originalName, setOriginalName] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -27,6 +28,7 @@ function Profile() {
         setProfile(response.data.profile)
         setName(response.data.profile.name)
         setEmail(response.data.profile.email)
+        setOriginalName(response.data.profile.name)
       } catch (requestError) {
         setError(
           requestError.response?.data?.message ||
@@ -45,29 +47,21 @@ function Profile() {
     setError('')
     setSuccess('')
 
-    if (!name.trim()) {
+    const trimmedName = name.trim()
+    if (!trimmedName) {
       setError('Name cannot be empty.')
       return
     }
 
     setSavingProfile(true)
     try {
-      const emailChanged = email.trim().toLowerCase() !== profile.email.toLowerCase()
-      if (emailChanged && !currentPassword) {
-        setError('Enter your current password to change your email.')
-        return
-      }
-
-      const response = await api.put('/profile', {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        currentPassword: emailChanged ? currentPassword : undefined
-      })
+      const response = await api.put('/profile', { name: trimmedName })
       const updatedProfile = response.data.profile
       setProfile(updatedProfile)
       setName(updatedProfile.name)
       setEmail(updatedProfile.email)
-      setCurrentPassword('')
+      setOriginalName(updatedProfile.name)
+      setIsEditingName(false)
 
       const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}')
       sessionStorage.setItem(
@@ -78,10 +72,7 @@ function Profile() {
           email: updatedProfile.email
         })
       )
-      if (response.data.token) {
-        sessionStorage.setItem('token', response.data.token)
-      }
-      setSuccess(response.data.message)
+      setSuccess(response.data.message || 'Profile updated successfully')
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
@@ -90,6 +81,13 @@ function Profile() {
     } finally {
       setSavingProfile(false)
     }
+  }
+
+  const handleCancelNameEdit = () => {
+    setName(originalName)
+    setIsEditingName(false)
+    setError('')
+    setSuccess('')
   }
 
   const handlePasswordChange = (event) => {
@@ -155,55 +153,70 @@ function Profile() {
         ) : profile ? (
           <div className="profile-panels">
             <section className="reading-form-section profile-card">
-              <div className="section-heading">
+              <div className="section-heading profile-card-header">
                 <div>
                   <h2>Personal Information</h2>
                   <p>Your account details</p>
                 </div>
+                {!isEditingName && (
+                  <button
+                    type="button"
+                    className="profile-edit-button"
+                    aria-label="Edit name"
+                    onClick={() => {
+                      setIsEditingName(true)
+                      setError('')
+                      setSuccess('')
+                    }}
+                  >
+                    ✎
+                  </button>
+                )}
               </div>
 
               <form className="profile-form" onSubmit={handleSaveProfile}>
                 <div className="form-field">
-                  <label htmlFor="profile-name">Full name</label>
+                  <label htmlFor="profile-name">Name</label>
                   <input
                     id="profile-name"
                     value={name}
                     maxLength={100}
                     onChange={(event) => setName(event.target.value)}
+                    readOnly={!isEditingName}
+                    disabled={!isEditingName}
                     required
                   />
                 </div>
+
                 <div className="form-field">
-                  <label htmlFor="profile-email">Email address</label>
+                  <label htmlFor="profile-email">Email</label>
                   <input
                     id="profile-email"
                     type="email"
                     maxLength={254}
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    required
+                    readOnly
+                    disabled
                   />
                 </div>
-                {email.trim().toLowerCase() !== profile.email.toLowerCase() && (
-                  <div className="form-field">
-                    <label htmlFor="profile-current-password">Current password (to change email)</label>
-                    <input
-                      id="profile-current-password"
-                      type="password"
-                      autoComplete="current-password"
-                      value={currentPassword}
-                      onChange={(event) => setCurrentPassword(event.target.value)}
-                      required
-                    />
+
+                <p className="profile-created">Account creation date: {createdDate}</p>
+
+                {isEditingName && (
+                  <div className="profile-edit-actions">
+                    <button className="profile-submit" type="submit" disabled={savingProfile}>
+                      {savingProfile ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      className="profile-cancel"
+                      onClick={handleCancelNameEdit}
+                      disabled={savingProfile}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
-                <p className="profile-note">
-                  Email changes require your current password. Email verification is not configured.
-                </p>
-                <p className="profile-created">Member since {createdDate}</p>
-                <button className="profile-submit" type="submit" disabled={savingProfile}>
-                  {savingProfile ? 'Saving...' : 'Save changes'}
-                </button>
               </form>
             </section>
 
@@ -260,7 +273,9 @@ function Profile() {
               </form>
             </section>
           </div>
-        ) : null}
+        ) : (
+          <p className="profile-status">Unable to load profile.</p>
+        )}
       </main>
     </div>
   )

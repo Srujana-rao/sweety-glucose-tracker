@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { getRememberedEmail } from '../utils/rememberedEmail'
 
 function NavigationIcon({ name }) {
   const iconAttributes = {
@@ -68,7 +67,6 @@ function Sidebar() {
   const handleLogout = () => {
     sessionStorage.removeItem('token')
     sessionStorage.removeItem('user')
-    getRememberedEmail()
     navigate('/login')
   }
 

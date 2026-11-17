@@ -14,6 +14,25 @@
   height: 100%;
 }
 
+.profile-card-header {
+  align-items: flex-start;
+}
+
+.profile-edit-button {
+  border: 1px solid #d5e2ed;
+  background: #f3f9fd;
+  color: #3d7aa3;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
 .profile-form {
   display: grid;
   gap: 16px;
@@ -21,9 +40,18 @@
   flex: 1;
 }
 
-.profile-form > .profile-submit {
+.profile-form > .profile-submit,
+.profile-edit-actions > .profile-submit,
+.profile-edit-actions > .profile-cancel {
   align-self: flex-start;
   margin-top: auto;
+}
+
+.profile-edit-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 .profile-note,
@@ -32,7 +60,8 @@
   font-size: 13px;
 }
 
-.profile-submit {
+.profile-submit,
+.profile-cancel {
   border: 0;
   border-radius: 999px;
   padding: 11px 18px;
@@ -50,7 +79,17 @@
   background: #86badc;
 }
 
-.profile-submit:disabled {
+.profile-cancel {
+  background: #edf2f7;
+  color: #1a2b3c;
+}
+
+.profile-cancel:hover:not(:disabled) {
+  background: #e3eaf2;
+}
+
+.profile-submit:disabled,
+.profile-cancel:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
